@@ -40,6 +40,7 @@ public class Search extends HttpServlet {
         ArrayList<JsonNode> list = new ArrayList<>();
         JsonNode rootNode = null;
         String keyword = "";
+        String query = "";
         
         //直接のアクセスがある場合
         String log = "";
@@ -74,32 +75,28 @@ public class Search extends HttpServlet {
                 }
             }
             
-            String query = resultURL+"&offset="+String.valueOf(offsetNum);
+            query = resultURL+"&offset="+String.valueOf(offsetNum);
             session.setAttribute("offset", offsetNum);
             
-            //API接続
-            rootNode = APImanager.itemSearch(query);
-            for(int i=0; i<rootNode.get("ResultSet").get("totalResultsReturned").asInt() ; i++){
-                list.add(rootNode.get("ResultSet").get("0").get("Result").get(String.valueOf(i)));
-            }
         } else {
             //初回の接続
             keyword = request.getParameter("keyword");
-            String resultURL = encode(keyword, "UTF-8");
-            if(keyword == null || keyword.equals("")){
-                request.setAttribute("error", keyword);
-                request.getRequestDispatcher("/top.jsp").forward(request, response);  
-            }   
-            
-            //API接続
-            rootNode = APImanager.itemSearch(resultURL);
-            
-                for(int i=0; i<rootNode.get("ResultSet").get("totalResultsReturned").asInt() ; i++){
-                     list.add(rootNode.get("ResultSet").get("0").get("Result").get(String.valueOf(i)));
-                 }
+            query = encode(keyword, "UTF-8");   
             
             session.setAttribute("keyword", keyword);
             session.setAttribute("offset", 0);
+        }
+        
+        //入力ミス
+        if(keyword == null || keyword.equals("")){
+            request.setAttribute("error", keyword);
+            request.getRequestDispatcher("/top.jsp").forward(request, response);  
+        }
+        
+        //API接続
+        rootNode = APImanager.itemSearch(query);
+        for(int i=0; i<rootNode.get("ResultSet").get("totalResultsReturned").asInt() ; i++){
+            list.add(rootNode.get("ResultSet").get("0").get("Result").get(String.valueOf(i)));
         }
 
         request.setAttribute("search", rootNode.get("ResultSet").get("totalResultsAvailable").asText());
